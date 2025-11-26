@@ -1,5 +1,5 @@
 {
-  "name": "text-to-table",
+  "name": "table-to-clipboard",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
