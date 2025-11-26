@@ -1,21 +1,21 @@
-# text-to-table
+# table-to-clipboard
 
 テキストデータ（TSV, CSV, Markdown, スペース区切り）をスプレッドシートに貼り付け可能な形式に変換するCLIツール。
 
 ## インストール
 
 ```bash
-pnpm install
+npm install -g @rasukarusan/table-to-clipboard
 ```
 
 ## 使い方
 
 ```bash
 # 標準入力からデータを読み込み、クリップボードにコピー
-pbpaste | pnpm run start
+pbpaste | table-to-clipboard
 
 # ファイルから読み込み
-cat data.tsv | pnpm run start
+cat data.csv | table-to-clipboard
 ```
 
 変換後、Google スプレッドシートや Excel に直接貼り付けできます。
@@ -40,13 +40,16 @@ cat data.tsv | pnpm run start
 
 ```bash
 # フォーマットを明示的に指定
-pnpm run start -- --csv
-pnpm run start -- --tsv
-pnpm run start -- --spaces
-pnpm run start -- --markdown
+table-to-clipboard --csv
+table-to-clipboard --tsv
+table-to-clipboard --spaces
+table-to-clipboard --markdown
 
 # 1行目をヘッダーとして扱わない
-pnpm run start -- --no-header
+table-to-clipboard --no-header
+
+# ヘルプ
+table-to-clipboard --help
 ```
 
 ## 使用例
@@ -54,14 +57,14 @@ pnpm run start -- --no-header
 ### TSV
 
 ```bash
-echo -e "名前\t年齢\t職業\n田中\t30\tエンジニア" | pnpm run start
+echo -e "名前\t年齢\t職業\n田中\t30\tエンジニア" | table-to-clipboard
 ```
 
 ### CSV
 
 ```bash
 echo "名前,年齢,職業
-田中,30,エンジニア" | pnpm run start
+田中,30,エンジニア" | table-to-clipboard
 ```
 
 ### Markdown テーブル
@@ -69,14 +72,14 @@ echo "名前,年齢,職業
 ```bash
 echo '|名前|年齢|職業|
 |---|---|---|
-|田中|30|エンジニア|' | pnpm run start
+|田中|30|エンジニア|' | table-to-clipboard
 ```
 
 ### スペース区切り（ターミナル出力のコピー用）
 
 ```bash
 echo "名前    年齢    職業
-田中    30      エンジニア" | pnpm run start
+田中    30      エンジニア" | table-to-clipboard
 ```
 
 ### セル内改行を含む CSV
@@ -85,16 +88,29 @@ echo "名前    年齢    職業
 echo 'Name,Comment
 "田中","これは
 複数行の
-コメントです"' | pnpm run start
+コメントです"' | table-to-clipboard
 ```
 
-## テスト
+## 開発
 
 ```bash
+# 依存のインストール
+pnpm install
+
+# 開発（TypeScript直接実行）
+echo "A,B,C" | pnpm run dev
+
+# ビルド
+pnpm run build
+
+# ビルド済みCLIの動作確認
+echo "A,B,C" | pnpm run start
+
+# テスト
 pnpm test
 ```
 
 ## 動作環境
 
 - macOS（`pbcopy`, `textutil` を使用）
-- Node.js
+- Node.js >= 16

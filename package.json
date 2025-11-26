@@ -1,27 +1,57 @@
 {
-  "name": "table-to-clipboard",
+  "name": "@rasukarusan/table-to-clipboard",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Convert text data (TSV, CSV, Markdown, space-separated) to clipboard format for spreadsheets",
+  "main": "dist/table-to-clipboard.js",
+  "bin": {
+    "table-to-clipboard": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "start": "ts-node tsv-to-richtext.ts",
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "start": "node dist/cli.js",
+    "dev": "ts-node table-to-clipboard.ts",
     "test": "jest",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "@contentful/rich-text-types": "^17.2.5",
-    "@types/node": "^24.10.1",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+  "keywords": [
+    "clipboard",
+    "table",
+    "tsv",
+    "csv",
+    "markdown",
+    "spreadsheet",
+    "copy",
+    "paste"
+  ],
+  "author": "Rasukarusan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rasukarusan/table-to-clipboard.git"
   },
+  "bugs": {
+    "url": "https://github.com/Rasukarusan/table-to-clipboard/issues"
+  },
+  "homepage": "https://github.com/Rasukarusan/table-to-clipboard#readme",
+  "engines": {
+    "node": ">=16"
+  },
+  "os": [
+    "darwin"
+  ],
+  "dependencies": {},
   "devDependencies": {
     "@types/jest": "^30.0.0",
+    "@types/node": "^24.10.1",
     "jest": "^30.2.0",
-    "ts-jest": "^29.4.5"
+    "ts-jest": "^29.4.5",
+    "typescript": "^5.9.3"
   }
 }
