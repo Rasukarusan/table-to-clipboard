@@ -207,27 +207,47 @@ export function tsvToHtmlTable(tsv: string, hasHeader: boolean = true): string {
   return toHtmlTable(tsv, hasHeader, "tsv");
 }
 
-export function copyHtmlToClipboard(html: string): void {
+export function copyHtmlToClipboard(html: string, plainText: string): void {
   const tempHtml = path.join(os.tmpdir(), "clipboard-temp.html");
   const tempRtf = path.join(os.tmpdir(), "clipboard-temp.rtf");
+  const tempText = path.join(os.tmpdir(), "clipboard-temp.txt");
+  const tempSwift = path.join(os.tmpdir(), "clipboard-temp.swift");
 
   // 完全なHTML文書として保存
   const fullHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>${html}</body></html>`;
   fs.writeFileSync(tempHtml, fullHtml);
+  fs.writeFileSync(tempText, plainText);
 
   try {
     // HTMLをRTFに変換
     execSync(`textutil -convert rtf -output "${tempRtf}" "${tempHtml}"`);
 
-    // RTFをクリップボードにコピー
-    const rtfContent = fs.readFileSync(tempRtf, "utf-8");
-    const script = `set the clipboard to {«class RTF »:«data RTF ${Buffer.from(rtfContent).toString("hex")}»}`;
-    execSync(`osascript -e '${script}'`);
+    // Swiftスクリプトで複数形式をクリップボードにコピー
+    const swiftCode = `
+import Cocoa
+
+let rtfPath = "${tempRtf}"
+let textPath = "${tempText}"
+
+guard let rtfData = FileManager.default.contents(atPath: rtfPath),
+      let textData = FileManager.default.contents(atPath: textPath) else {
+    exit(1)
+}
+
+let pasteboard = NSPasteboard.general
+pasteboard.clearContents()
+pasteboard.setData(rtfData, forType: .rtf)
+pasteboard.setData(textData, forType: .string)
+`;
+    fs.writeFileSync(tempSwift, swiftCode);
+    execSync(`swift "${tempSwift}"`);
   } catch (error) {
     console.error("クリップボードへのコピーに失敗しました:", error);
   } finally {
     if (fs.existsSync(tempHtml)) fs.unlinkSync(tempHtml);
     if (fs.existsSync(tempRtf)) fs.unlinkSync(tempRtf);
+    if (fs.existsSync(tempText)) fs.unlinkSync(tempText);
+    if (fs.existsSync(tempSwift)) fs.unlinkSync(tempSwift);
   }
 }
 
@@ -278,7 +298,7 @@ async function main() {
   console.error(`形式: ${actual.toUpperCase()}（${delimiter === "auto" ? "自動検出" : "指定"}）`);
 
   const html = toHtmlTable(data, hasHeader, delimiter);
-  copyHtmlToClipboard(html);
+  copyHtmlToClipboard(html, data);
 }
 
 // CLIとして実行された場合のみmainを実行
