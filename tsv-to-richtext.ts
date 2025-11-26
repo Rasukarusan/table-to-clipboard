@@ -91,24 +91,37 @@ export function parseCsv(data: string): string[][] {
   return rows;
 }
 
-export type Delimiter = "tsv" | "csv" | "auto";
+export type Delimiter = "tsv" | "csv" | "spaces" | "auto";
 
-export function detectDelimiter(data: string): "tsv" | "csv" {
+export function detectDelimiter(data: string): "tsv" | "csv" | "spaces" {
   const firstLine = data.split("\n")[0];
 
   const tabCount = (firstLine.match(/\t/g) || []).length;
   const commaCount = (firstLine.match(/,/g) || []).length;
+  const multiSpaceCount = (firstLine.match(/  +/g) || []).length; // 2つ以上の連続スペース
 
-  // タブがあればTSV、なければCSV
+  // タブがあればTSV
   if (tabCount > 0) {
     return "tsv";
   }
+  // カンマがあればCSV
   if (commaCount > 0) {
     return "csv";
+  }
+  // 2つ以上の連続スペースがあればspaces
+  if (multiSpaceCount > 0) {
+    return "spaces";
   }
 
   // どちらもなければTSVとして扱う
   return "tsv";
+}
+
+export function parseSpaceSeparated(data: string): string[][] {
+  return data.trim().split("\n").map((line) => {
+    // 2つ以上の連続スペースで分割し、各セルをtrim
+    return line.split(/  +/).map((cell) => cell.trim());
+  });
 }
 
 export function toHtmlTable(
@@ -118,10 +131,17 @@ export function toHtmlTable(
 ): string {
   const actualDelimiter = delimiter === "auto" ? detectDelimiter(data) : delimiter;
 
-  const rows: string[][] =
-    actualDelimiter === "csv"
-      ? parseCsv(data.trim())
-      : data.trim().split("\n").map((line) => line.split("\t"));
+  let rows: string[][];
+  switch (actualDelimiter) {
+    case "csv":
+      rows = parseCsv(data.trim());
+      break;
+    case "spaces":
+      rows = parseSpaceSeparated(data);
+      break;
+    default:
+      rows = data.trim().split("\n").map((line) => line.split("\t"));
+  }
 
   let html = "<table>";
 
@@ -195,6 +215,7 @@ async function main() {
   let delimiter: Delimiter = "auto";
   if (args.includes("--csv")) delimiter = "csv";
   if (args.includes("--tsv")) delimiter = "tsv";
+  if (args.includes("--spaces")) delimiter = "spaces";
 
   // 標準入力からデータを読み取り
   const data = await readStdin();
@@ -205,6 +226,7 @@ async function main() {
     console.error("オプション:");
     console.error("  --csv        CSV形式として処理（自動判定を上書き）");
     console.error("  --tsv        TSV形式として処理（自動判定を上書き）");
+    console.error("  --spaces     スペース区切り形式として処理（自動判定を上書き）");
     console.error("  --no-header  1行目をヘッダーとして扱わない");
     process.exit(1);
   }

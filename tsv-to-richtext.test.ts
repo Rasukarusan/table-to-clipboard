@@ -1,4 +1,4 @@
-import { escapeHtml, tsvToHtmlTable, toHtmlTable, parseCsvLine, parseCsv, detectDelimiter } from "./tsv-to-richtext";
+import { escapeHtml, tsvToHtmlTable, toHtmlTable, parseCsvLine, parseCsv, detectDelimiter, parseSpaceSeparated } from "./tsv-to-richtext";
 
 describe("escapeHtml", () => {
   it("特殊文字をエスケープする", () => {
@@ -217,8 +217,55 @@ describe("detectDelimiter", () => {
     expect(detectDelimiter("A,B\tC\n1,2\t3")).toBe("tsv");
   });
 
+  it("2つ以上の連続スペースがあればspacesと判定する", () => {
+    expect(detectDelimiter("名前    年齢    職業")).toBe("spaces");
+  });
+
   it("どちらもなければTSV", () => {
     expect(detectDelimiter("ABC")).toBe("tsv");
+  });
+});
+
+describe("parseSpaceSeparated", () => {
+  it("連続スペースで区切る", () => {
+    const data = "名前    年齢    職業\n田中    30      エンジニア";
+    const result = parseSpaceSeparated(data);
+
+    expect(result).toEqual([
+      ["名前", "年齢", "職業"],
+      ["田中", "30", "エンジニア"],
+    ]);
+  });
+
+  it("スペース数が異なっても正しく分割する", () => {
+    const data = "A  B    C\n1   2  3";
+    const result = parseSpaceSeparated(data);
+
+    expect(result).toEqual([
+      ["A", "B", "C"],
+      ["1", "2", "3"],
+    ]);
+  });
+
+  it("単一スペースはセル内に残る", () => {
+    const data = "Hello World  Test";
+    const result = parseSpaceSeparated(data);
+
+    expect(result).toEqual([["Hello World", "Test"]]);
+  });
+});
+
+describe("toHtmlTable with spaces", () => {
+  it("スペース区切りを自動検出してHTMLテーブルに変換する", () => {
+    const data = "名前    年齢\n田中    30";
+    const result = toHtmlTable(data);
+
+    expect(result).toBe(
+      "<table>" +
+        "<tr><th>名前</th><th>年齢</th></tr>" +
+        "<tr><td>田中</td><td>30</td></tr>" +
+        "</table>"
+    );
   });
 });
 
