@@ -230,6 +230,7 @@ export function copyHtmlToClipboard(html: string, plainText: string): void {
     execSync(`textutil -convert rtf -output "${tempRtf}" "${tempHtml}"`);
 
     // Swiftスクリプトで複数形式をクリップボードにコピー
+    // AppleScriptだとHex文字列が長すぎるとエラーになるため、Swiftを使用
     const swiftCode = `
 import Cocoa
 
