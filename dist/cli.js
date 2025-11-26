@@ -35,7 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const readline = __importStar(require("readline"));
-const table_to_clipboard_1 = require("./table-to-clipboard");
+const table_to_clipboard_js_1 = require("./table-to-clipboard.js");
 async function readStdin() {
     const rl = readline.createInterface({
         input: process.stdin,
@@ -88,18 +88,18 @@ Examples:
         delimiter = "markdown";
     const rawData = await readStdin();
     // \t, \n などのリテラル文字列を実際のエスケープシーケンスに変換
-    const data = (0, table_to_clipboard_1.unescapeLiterals)(rawData);
+    const data = (0, table_to_clipboard_js_1.unescapeLiterals)(rawData);
     if (!data.trim()) {
         console.error("No data provided");
         console.error("Usage: pbpaste | table-to-clipboard");
         console.error("Run 'table-to-clipboard --help' for more options");
         process.exit(1);
     }
-    const detected = (0, table_to_clipboard_1.detectDelimiter)(data);
+    const detected = (0, table_to_clipboard_js_1.detectDelimiter)(data);
     const actual = delimiter === "auto" ? detected : delimiter;
     console.error(`Format: ${actual.toUpperCase()} (${delimiter === "auto" ? "auto-detected" : "specified"})`);
-    const html = (0, table_to_clipboard_1.toHtmlTable)(data, hasHeader, delimiter);
-    (0, table_to_clipboard_1.copyHtmlToClipboard)(html, data);
+    const html = (0, table_to_clipboard_js_1.toHtmlTable)(data, hasHeader, delimiter);
+    (0, table_to_clipboard_js_1.copyHtmlToClipboard)(html, data);
     console.error("Copied to clipboard!");
 }
 main().catch((err) => {
