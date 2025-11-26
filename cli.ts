@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import * as readline from "readline";
-import { toHtmlTable, detectDelimiter, copyHtmlToClipboard, Delimiter } from "./table-to-clipboard";
+import { toHtmlTable, detectDelimiter, copyHtmlToClipboard, unescapeLiterals, Delimiter } from "./table-to-clipboard";
 
 async function readStdin(): Promise<string> {
   const rl = readline.createInterface({
@@ -58,7 +58,9 @@ Examples:
   if (args.includes("--spaces")) delimiter = "spaces";
   if (args.includes("--markdown") || args.includes("--md")) delimiter = "markdown";
 
-  const data = await readStdin();
+  const rawData = await readStdin();
+  // \t, \n などのリテラル文字列を実際のエスケープシーケンスに変換
+  const data = unescapeLiterals(rawData);
 
   if (!data.trim()) {
     console.error("No data provided");

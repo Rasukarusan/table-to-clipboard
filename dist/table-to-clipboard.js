@@ -34,6 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.escapeHtml = escapeHtml;
+exports.unescapeLiterals = unescapeLiterals;
 exports.parseCsvLine = parseCsvLine;
 exports.parseCsv = parseCsv;
 exports.detectDelimiter = detectDelimiter;
@@ -53,6 +54,12 @@ function escapeHtml(text) {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
+}
+function unescapeLiterals(text) {
+    return text
+        .replace(/\\t/g, "\t")
+        .replace(/\\n/g, "\n")
+        .replace(/\\r/g, "\r");
 }
 function parseCsvLine(line) {
     const cells = [];
@@ -302,7 +309,9 @@ async function main() {
     if (args.includes("--markdown") || args.includes("--md"))
         delimiter = "markdown";
     // 標準入力からデータを読み取り
-    const data = await readStdin();
+    const rawData = await readStdin();
+    // \t, \n などのリテラル文字列を実際のエスケープシーケンスに変換
+    const data = unescapeLiterals(rawData);
     if (!data.trim()) {
         console.error("データが入力されていません");
         console.error("使用方法: pbpaste | pnpm run start [オプション]");
