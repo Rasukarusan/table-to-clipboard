@@ -1,10 +1,10 @@
-import {execSync} from "child_process";
+import { execSync } from "child_process";
 import * as readline from "readline";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 
-function escapeHtml(text: string): string {
+export function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -12,7 +12,7 @@ function escapeHtml(text: string): string {
     .replace(/"/g, "&quot;");
 }
 
-function tsvToHtmlTable(tsv: string, hasHeader: boolean = true): string {
+export function tsvToHtmlTable(tsv: string, hasHeader: boolean = true): string {
   const lines = tsv.trim().split("\n");
   let html = "<table>";
 
@@ -32,7 +32,7 @@ function tsvToHtmlTable(tsv: string, hasHeader: boolean = true): string {
   return html;
 }
 
-function copyHtmlToClipboard(html: string): void {
+export function copyHtmlToClipboard(html: string): void {
   const tempHtml = path.join(os.tmpdir(), "clipboard-temp.html");
   const tempRtf = path.join(os.tmpdir(), "clipboard-temp.rtf");
 
@@ -90,4 +90,7 @@ async function main() {
   copyHtmlToClipboard(html);
 }
 
-main().catch(console.error);
+// CLIとして実行された場合のみmainを実行
+if (require.main === module) {
+  main().catch(console.error);
+}
