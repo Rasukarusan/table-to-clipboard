@@ -1,4 +1,4 @@
-import { escapeHtml, tsvToHtmlTable, toHtmlTable, parseCsvLine, parseCsv, detectDelimiter, parseSpaceSeparated, parseMarkdownTable } from "./table-to-clipboard";
+import { escapeHtml, tsvToHtmlTable, toHtmlTable, parseCsvLine, parseCsv, detectDelimiter, parseSpaceSeparated, parseMarkdownTable, unescapeLiterals } from "./table-to-clipboard";
 
 describe("escapeHtml", () => {
   it("特殊文字をエスケープする", () => {
@@ -14,6 +14,24 @@ describe("escapeHtml", () => {
 
   it("空文字列を処理できる", () => {
     expect(escapeHtml("")).toBe("");
+  });
+});
+
+describe("unescapeLiterals", () => {
+  it("\\tを実際のタブに変換する", () => {
+    expect(unescapeLiterals("A\\tB\\tC")).toBe("A\tB\tC");
+  });
+
+  it("\\nを実際の改行に変換する", () => {
+    expect(unescapeLiterals("A\\nB")).toBe("A\nB");
+  });
+
+  it("\\t と \\n の組み合わせを変換する", () => {
+    expect(unescapeLiterals("名前\\t年齢\\n田中\\t30")).toBe("名前\t年齢\n田中\t30");
+  });
+
+  it("エスケープシーケンスがなければそのまま返す", () => {
+    expect(unescapeLiterals("hello")).toBe("hello");
   });
 });
 

@@ -1,4 +1,5 @@
 export declare function escapeHtml(text: string): string;
+export declare function unescapeLiterals(text: string): string;
 export declare function parseCsvLine(line: string): string[];
 export declare function parseCsv(data: string): string[][];
 export type Delimiter = "tsv" | "csv" | "spaces" | "markdown" | "auto";

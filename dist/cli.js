@@ -86,7 +86,9 @@ Examples:
         delimiter = "spaces";
     if (args.includes("--markdown") || args.includes("--md"))
         delimiter = "markdown";
-    const data = await readStdin();
+    const rawData = await readStdin();
+    // \t, \n などのリテラル文字列を実際のエスケープシーケンスに変換
+    const data = (0, table_to_clipboard_1.unescapeLiterals)(rawData);
     if (!data.trim()) {
         console.error("No data provided");
         console.error("Usage: pbpaste | table-to-clipboard");
