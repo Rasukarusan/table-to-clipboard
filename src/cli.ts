@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import * as readline from "readline";
-import { toHtmlTable, detectDelimiter, copyHtmlToClipboard, unescapeLiterals, Delimiter } from "./table-to-clipboard";
+import { toHtmlTable, detectDelimiter, copyHtmlToClipboard, unescapeLiterals, Delimiter } from "./table-to-clipboard.js";
 
 async function readStdin(): Promise<string> {
   const rl = readline.createInterface({

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Convert text data (TSV, CSV, Markdown, space-separated) to clipboard format for spreadsheets",
   "main": "dist/table-to-clipboard.js",
+  "types": "dist/table-to-clipboard.d.ts",
   "bin": {
     "table-to-clipboard": "dist/cli.js"
   },
@@ -13,7 +14,7 @@
     "build": "tsc",
     "prepublishOnly": "npm run build",
     "start": "node dist/cli.js",
-    "dev": "ts-node table-to-clipboard.ts",
+    "dev": "ts-node src/table-to-clipboard.ts",
     "test": "jest",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

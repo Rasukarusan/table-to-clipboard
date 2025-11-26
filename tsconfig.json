@@ -6,11 +6,11 @@
     "esModuleInterop": true,
     "strict": true,
     "outDir": "./dist",
-    "rootDir": "./",
+    "rootDir": "./src",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true
   },
-  "include": ["table-to-clipboard.ts", "cli.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "**/*.test.ts"]
 }
