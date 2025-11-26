@@ -1,4 +1,4 @@
-import { escapeHtml, tsvToHtmlTable, toHtmlTable, parseCsvLine, parseCsv } from "./tsv-to-richtext";
+import { escapeHtml, tsvToHtmlTable, toHtmlTable, parseCsvLine, parseCsv, detectDelimiter } from "./tsv-to-richtext";
 
 describe("escapeHtml", () => {
   it("特殊文字をエスケープする", () => {
@@ -201,5 +201,49 @@ describe("parseCsv", () => {
     const result = parseCsv(csv);
 
     expect(result).toEqual([["a\nb", "c\nd"]]);
+  });
+});
+
+describe("detectDelimiter", () => {
+  it("タブがあればTSVと判定する", () => {
+    expect(detectDelimiter("A\tB\tC\n1\t2\t3")).toBe("tsv");
+  });
+
+  it("カンマがあればCSVと判定する", () => {
+    expect(detectDelimiter("A,B,C\n1,2,3")).toBe("csv");
+  });
+
+  it("タブとカンマ両方あればTSV優先", () => {
+    expect(detectDelimiter("A,B\tC\n1,2\t3")).toBe("tsv");
+  });
+
+  it("どちらもなければTSV", () => {
+    expect(detectDelimiter("ABC")).toBe("tsv");
+  });
+});
+
+describe("toHtmlTable with auto detection", () => {
+  it("TSVを自動検出する", () => {
+    const tsv = "A\tB\n1\t2";
+    const result = toHtmlTable(tsv);
+
+    expect(result).toBe(
+      "<table>" +
+        "<tr><th>A</th><th>B</th></tr>" +
+        "<tr><td>1</td><td>2</td></tr>" +
+        "</table>"
+    );
+  });
+
+  it("CSVを自動検出する", () => {
+    const csv = "A,B\n1,2";
+    const result = toHtmlTable(csv);
+
+    expect(result).toBe(
+      "<table>" +
+        "<tr><th>A</th><th>B</th></tr>" +
+        "<tr><td>1</td><td>2</td></tr>" +
+        "</table>"
+    );
   });
 });

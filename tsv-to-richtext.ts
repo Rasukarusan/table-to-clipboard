@@ -91,15 +91,35 @@ export function parseCsv(data: string): string[][] {
   return rows;
 }
 
-export type Delimiter = "tsv" | "csv";
+export type Delimiter = "tsv" | "csv" | "auto";
+
+export function detectDelimiter(data: string): "tsv" | "csv" {
+  const firstLine = data.split("\n")[0];
+
+  const tabCount = (firstLine.match(/\t/g) || []).length;
+  const commaCount = (firstLine.match(/,/g) || []).length;
+
+  // タブがあればTSV、なければCSV
+  if (tabCount > 0) {
+    return "tsv";
+  }
+  if (commaCount > 0) {
+    return "csv";
+  }
+
+  // どちらもなければTSVとして扱う
+  return "tsv";
+}
 
 export function toHtmlTable(
   data: string,
   hasHeader: boolean = true,
-  delimiter: Delimiter = "tsv"
+  delimiter: Delimiter = "auto"
 ): string {
+  const actualDelimiter = delimiter === "auto" ? detectDelimiter(data) : delimiter;
+
   const rows: string[][] =
-    delimiter === "csv"
+    actualDelimiter === "csv"
       ? parseCsv(data.trim())
       : data.trim().split("\n").map((line) => line.split("\t"));
 
@@ -170,19 +190,28 @@ async function readStdin(): Promise<string> {
 async function main() {
   const args = process.argv.slice(2);
   const hasHeader = !args.includes("--no-header");
-  const delimiter: Delimiter = args.includes("--csv") ? "csv" : "tsv";
+
+  // 明示的に指定された場合のみ使用、なければauto
+  let delimiter: Delimiter = "auto";
+  if (args.includes("--csv")) delimiter = "csv";
+  if (args.includes("--tsv")) delimiter = "tsv";
 
   // 標準入力からデータを読み取り
   const data = await readStdin();
 
   if (!data.trim()) {
     console.error("データが入力されていません");
-    console.error("使用方法: pbpaste | npx ts-node tsv-to-richtext.ts [オプション]");
+    console.error("使用方法: pbpaste | pnpm run start [オプション]");
     console.error("オプション:");
-    console.error("  --csv        CSV形式として処理");
+    console.error("  --csv        CSV形式として処理（自動判定を上書き）");
+    console.error("  --tsv        TSV形式として処理（自動判定を上書き）");
     console.error("  --no-header  1行目をヘッダーとして扱わない");
     process.exit(1);
   }
+
+  const detected = detectDelimiter(data);
+  const actual = delimiter === "auto" ? detected : delimiter;
+  console.error(`形式: ${actual.toUpperCase()}（${delimiter === "auto" ? "自動検出" : "指定"}）`);
 
   const html = toHtmlTable(data, hasHeader, delimiter);
   copyHtmlToClipboard(html);
