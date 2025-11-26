@@ -1,4 +1,4 @@
-import { escapeHtml, tsvToHtmlTable, toHtmlTable, parseCsvLine, parseCsv, detectDelimiter, parseSpaceSeparated, parseMarkdownTable } from "./tsv-to-richtext";
+import { escapeHtml, tsvToHtmlTable, toHtmlTable, parseCsvLine, parseCsv, detectDelimiter, parseSpaceSeparated, parseMarkdownTable } from "./table-to-clipboard";
 
 describe("escapeHtml", () => {
   it("特殊文字をエスケープする", () => {
