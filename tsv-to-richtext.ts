@@ -91,10 +91,16 @@ export function parseCsv(data: string): string[][] {
   return rows;
 }
 
-export type Delimiter = "tsv" | "csv" | "spaces" | "auto";
+export type Delimiter = "tsv" | "csv" | "spaces" | "markdown" | "auto";
 
-export function detectDelimiter(data: string): "tsv" | "csv" | "spaces" {
+export function detectDelimiter(data: string): "tsv" | "csv" | "spaces" | "markdown" {
   const firstLine = data.split("\n")[0];
+
+  // markdownテーブルの判定（|で始まるか、|を含む行）
+  const trimmedFirst = firstLine.trim();
+  if (trimmedFirst.startsWith("|") || /\|.*\|/.test(trimmedFirst)) {
+    return "markdown";
+  }
 
   const tabCount = (firstLine.match(/\t/g) || []).length;
   const commaCount = (firstLine.match(/,/g) || []).length;
@@ -115,6 +121,37 @@ export function detectDelimiter(data: string): "tsv" | "csv" | "spaces" {
 
   // どちらもなければTSVとして扱う
   return "tsv";
+}
+
+export function parseMarkdownTable(data: string): string[][] {
+  const lines = data.trim().split("\n");
+  const rows: string[][] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // 区切り行（|---|---|）をスキップ
+    if (/^\|?[\s\-:|]+\|?$/.test(trimmed)) {
+      continue;
+    }
+
+    // |で分割し、前後の空要素を除去
+    const cells = trimmed
+      .split("|")
+      .map((cell) => cell.trim())
+      .filter((_, index, arr) => {
+        // 最初と最後の空要素を除去（|で始まり|で終わる場合）
+        if (index === 0 && arr[0] === "") return false;
+        if (index === arr.length - 1 && arr[arr.length - 1] === "") return false;
+        return true;
+      });
+
+    if (cells.length > 0) {
+      rows.push(cells);
+    }
+  }
+
+  return rows;
 }
 
 export function parseSpaceSeparated(data: string): string[][] {
@@ -138,6 +175,9 @@ export function toHtmlTable(
       break;
     case "spaces":
       rows = parseSpaceSeparated(data);
+      break;
+    case "markdown":
+      rows = parseMarkdownTable(data);
       break;
     default:
       rows = data.trim().split("\n").map((line) => line.split("\t"));
@@ -216,6 +256,7 @@ async function main() {
   if (args.includes("--csv")) delimiter = "csv";
   if (args.includes("--tsv")) delimiter = "tsv";
   if (args.includes("--spaces")) delimiter = "spaces";
+  if (args.includes("--markdown") || args.includes("--md")) delimiter = "markdown";
 
   // 標準入力からデータを読み取り
   const data = await readStdin();
@@ -227,6 +268,7 @@ async function main() {
     console.error("  --csv        CSV形式として処理（自動判定を上書き）");
     console.error("  --tsv        TSV形式として処理（自動判定を上書き）");
     console.error("  --spaces     スペース区切り形式として処理（自動判定を上書き）");
+    console.error("  --markdown   Markdownテーブル形式として処理（自動判定を上書き）");
     console.error("  --no-header  1行目をヘッダーとして扱わない");
     process.exit(1);
   }

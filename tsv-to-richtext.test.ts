@@ -1,4 +1,4 @@
-import { escapeHtml, tsvToHtmlTable, toHtmlTable, parseCsvLine, parseCsv, detectDelimiter, parseSpaceSeparated } from "./tsv-to-richtext";
+import { escapeHtml, tsvToHtmlTable, toHtmlTable, parseCsvLine, parseCsv, detectDelimiter, parseSpaceSeparated, parseMarkdownTable } from "./tsv-to-richtext";
 
 describe("escapeHtml", () => {
   it("特殊文字をエスケープする", () => {
@@ -221,8 +221,79 @@ describe("detectDelimiter", () => {
     expect(detectDelimiter("名前    年齢    職業")).toBe("spaces");
   });
 
+  it("markdownテーブルを判定する", () => {
+    expect(detectDelimiter("|A|B|C|")).toBe("markdown");
+    expect(detectDelimiter("| A | B | C |")).toBe("markdown");
+  });
+
   it("どちらもなければTSV", () => {
     expect(detectDelimiter("ABC")).toBe("tsv");
+  });
+});
+
+describe("parseMarkdownTable", () => {
+  it("基本的なmarkdownテーブルをパースする", () => {
+    const md = `|A|B|C|
+|---|---|---|
+|1|2|3|`;
+    const result = parseMarkdownTable(md);
+
+    expect(result).toEqual([
+      ["A", "B", "C"],
+      ["1", "2", "3"],
+    ]);
+  });
+
+  it("スペースを含むmarkdownテーブルをパースする", () => {
+    const md = `| 品名 | 金額 |
+| --- | --- |
+| カフェ | 560 |`;
+    const result = parseMarkdownTable(md);
+
+    expect(result).toEqual([
+      ["品名", "金額"],
+      ["カフェ", "560"],
+    ]);
+  });
+
+  it("空セルを含むmarkdownテーブルをパースする", () => {
+    const md = `|品名|勘定科目|空白|取引先|
+|---|---|---|---|
+|カフェ|雑費||コメダ珈琲店|`;
+    const result = parseMarkdownTable(md);
+
+    expect(result).toEqual([
+      ["品名", "勘定科目", "空白", "取引先"],
+      ["カフェ", "雑費", "", "コメダ珈琲店"],
+    ]);
+  });
+
+  it("インデントされたmarkdownテーブルをパースする", () => {
+    const md = `     |A|B|
+     |---|---|
+     |1|2|`;
+    const result = parseMarkdownTable(md);
+
+    expect(result).toEqual([
+      ["A", "B"],
+      ["1", "2"],
+    ]);
+  });
+});
+
+describe("toHtmlTable with markdown", () => {
+  it("markdownテーブルを自動検出してHTMLテーブルに変換する", () => {
+    const md = `|名前|年齢|
+|---|---|
+|田中|30|`;
+    const result = toHtmlTable(md);
+
+    expect(result).toBe(
+      "<table>" +
+        "<tr><th>名前</th><th>年齢</th></tr>" +
+        "<tr><td>田中</td><td>30</td></tr>" +
+        "</table>"
+    );
   });
 });
 
