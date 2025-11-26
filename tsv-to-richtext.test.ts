@@ -1,4 +1,4 @@
-import { escapeHtml, tsvToHtmlTable } from "./tsv-to-richtext";
+import { escapeHtml, tsvToHtmlTable, toHtmlTable, parseCsvLine, parseCsv } from "./tsv-to-richtext";
 
 describe("escapeHtml", () => {
   it("特殊文字をエスケープする", () => {
@@ -106,5 +106,100 @@ describe("tsvToHtmlTable", () => {
         "<tr><td>R3C1</td><td>R3C2</td></tr>" +
         "</table>"
     );
+  });
+});
+
+describe("parseCsvLine", () => {
+  it("基本的なCSV行をパースする", () => {
+    expect(parseCsvLine("a,b,c")).toEqual(["a", "b", "c"]);
+  });
+
+  it("ダブルクォートで囲まれたフィールドを処理する", () => {
+    expect(parseCsvLine('"hello","world"')).toEqual(["hello", "world"]);
+  });
+
+  it("カンマを含むフィールドを処理する", () => {
+    expect(parseCsvLine('"a,b",c')).toEqual(["a,b", "c"]);
+  });
+
+  it("エスケープされたダブルクォートを処理する", () => {
+    expect(parseCsvLine('"say ""hello""",test')).toEqual(['say "hello"', "test"]);
+  });
+
+  it("空のフィールドを処理する", () => {
+    expect(parseCsvLine("a,,c")).toEqual(["a", "", "c"]);
+  });
+
+  it("日本語を処理する", () => {
+    expect(parseCsvLine("名前,年齢,職業")).toEqual(["名前", "年齢", "職業"]);
+  });
+});
+
+describe("toHtmlTable with CSV", () => {
+  it("基本的なCSVをHTMLテーブルに変換する", () => {
+    const csv = "A,B,C\n1,2,3";
+    const result = toHtmlTable(csv, true, "csv");
+
+    expect(result).toBe(
+      "<table>" +
+        "<tr><th>A</th><th>B</th><th>C</th></tr>" +
+        "<tr><td>1</td><td>2</td><td>3</td></tr>" +
+        "</table>"
+    );
+  });
+
+  it("カンマを含むセルを正しく処理する", () => {
+    const csv = 'Name,Address\n"Tanaka, Taro","Tokyo, Japan"';
+    const result = toHtmlTable(csv, true, "csv");
+
+    expect(result).toBe(
+      "<table>" +
+        "<tr><th>Name</th><th>Address</th></tr>" +
+        "<tr><td>Tanaka, Taro</td><td>Tokyo, Japan</td></tr>" +
+        "</table>"
+    );
+  });
+
+  it("空のセルを処理できる", () => {
+    const csv = "A,,C\n1,,3";
+    const result = toHtmlTable(csv, true, "csv");
+
+    expect(result).toBe(
+      "<table>" +
+        "<tr><th>A</th><th></th><th>C</th></tr>" +
+        "<tr><td>1</td><td></td><td>3</td></tr>" +
+        "</table>"
+    );
+  });
+
+  it("セル内の改行を処理できる", () => {
+    const csv = 'Name,Comment\n"田中","これは\n複数行の\nコメントです"';
+    const result = toHtmlTable(csv, true, "csv");
+
+    expect(result).toBe(
+      "<table>" +
+        "<tr><th>Name</th><th>Comment</th></tr>" +
+        "<tr><td>田中</td><td>これは<br>複数行の<br>コメントです</td></tr>" +
+        "</table>"
+    );
+  });
+});
+
+describe("parseCsv", () => {
+  it("セル内改行を含むCSVをパースする", () => {
+    const csv = 'A,B\n"line1\nline2",C';
+    const result = parseCsv(csv);
+
+    expect(result).toEqual([
+      ["A", "B"],
+      ["line1\nline2", "C"],
+    ]);
+  });
+
+  it("複数の複数行セルを処理する", () => {
+    const csv = '"a\nb","c\nd"';
+    const result = parseCsv(csv);
+
+    expect(result).toEqual([["a\nb", "c\nd"]]);
   });
 });

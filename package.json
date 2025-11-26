@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "start": "ts-node tsv-to-richtext.ts",
     "test": "jest",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
