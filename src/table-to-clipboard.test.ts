@@ -1,4 +1,11 @@
+import * as fs from "fs";
+import * as path from "path";
 import { escapeHtml, tsvToHtmlTable, toHtmlTable, parseCsvLine, parseCsv, detectDelimiter, parseSpaceSeparated, parseMarkdownTable, unescapeLiterals } from "./table-to-clipboard";
+
+// テストデータを読み込むヘルパー関数
+const loadTestData = (filename: string): string => {
+  return fs.readFileSync(path.join(__dirname, "testdata", filename), "utf-8");
+};
 
 describe("escapeHtml", () => {
   it("特殊文字をエスケープする", () => {
@@ -37,7 +44,7 @@ describe("unescapeLiterals", () => {
 
 describe("tsvToHtmlTable", () => {
   it("基本的なTSVをHTMLテーブルに変換する", () => {
-    const tsv = "A\tB\tC\n1\t2\t3";
+    const tsv = loadTestData("basic.tsv");
     const result = tsvToHtmlTable(tsv);
 
     expect(result).toBe(
@@ -49,7 +56,7 @@ describe("tsvToHtmlTable", () => {
   });
 
   it("ヘッダーなしオプションで全てtdになる", () => {
-    const tsv = "A\tB\tC\n1\t2\t3";
+    const tsv = loadTestData("basic.tsv");
     const result = tsvToHtmlTable(tsv, false);
 
     expect(result).toBe(
@@ -61,14 +68,14 @@ describe("tsvToHtmlTable", () => {
   });
 
   it("1行だけのTSVを処理できる", () => {
-    const tsv = "A\tB\tC";
+    const tsv = loadTestData("single-row.tsv");
     const result = tsvToHtmlTable(tsv);
 
     expect(result).toBe("<table><tr><th>A</th><th>B</th><th>C</th></tr></table>");
   });
 
   it("日本語を正しく処理できる", () => {
-    const tsv = "名前\t年齢\n田中\t30";
+    const tsv = loadTestData("japanese.tsv");
     const result = tsvToHtmlTable(tsv);
 
     expect(result).toBe(
@@ -80,7 +87,7 @@ describe("tsvToHtmlTable", () => {
   });
 
   it("特殊文字を含むセルをエスケープする", () => {
-    const tsv = "<script>\t&test";
+    const tsv = loadTestData("special-chars.tsv");
     const result = tsvToHtmlTable(tsv);
 
     expect(result).toBe(
@@ -89,7 +96,7 @@ describe("tsvToHtmlTable", () => {
   });
 
   it("空のセルを処理できる", () => {
-    const tsv = "A\t\tC\n1\t\t3";
+    const tsv = loadTestData("empty-cells.tsv");
     const result = tsvToHtmlTable(tsv);
 
     expect(result).toBe(
@@ -113,7 +120,7 @@ describe("tsvToHtmlTable", () => {
   });
 
   it("複数行のデータを処理できる", () => {
-    const tsv = "H1\tH2\nR1C1\tR1C2\nR2C1\tR2C2\nR3C1\tR3C2";
+    const tsv = loadTestData("multirow.tsv");
     const result = tsvToHtmlTable(tsv);
 
     expect(result).toBe(
@@ -155,7 +162,7 @@ describe("parseCsvLine", () => {
 
 describe("toHtmlTable with CSV", () => {
   it("基本的なCSVをHTMLテーブルに変換する", () => {
-    const csv = "A,B,C\n1,2,3";
+    const csv = loadTestData("basic.csv");
     const result = toHtmlTable(csv, true, "csv");
 
     expect(result).toBe(
@@ -167,7 +174,7 @@ describe("toHtmlTable with CSV", () => {
   });
 
   it("カンマを含むセルを正しく処理する", () => {
-    const csv = 'Name,Address\n"Tanaka, Taro","Tokyo, Japan"';
+    const csv = loadTestData("with-comma.csv");
     const result = toHtmlTable(csv, true, "csv");
 
     expect(result).toBe(
@@ -179,7 +186,7 @@ describe("toHtmlTable with CSV", () => {
   });
 
   it("空のセルを処理できる", () => {
-    const csv = "A,,C\n1,,3";
+    const csv = loadTestData("empty-cells.csv");
     const result = toHtmlTable(csv, true, "csv");
 
     expect(result).toBe(
@@ -191,7 +198,7 @@ describe("toHtmlTable with CSV", () => {
   });
 
   it("セル内の改行を処理できる", () => {
-    const csv = 'Name,Comment\n"田中","これは\n複数行の\nコメントです"';
+    const csv = loadTestData("multiline.csv");
     const result = toHtmlTable(csv, true, "csv");
 
     expect(result).toBe(
@@ -205,7 +212,7 @@ describe("toHtmlTable with CSV", () => {
 
 describe("parseCsv", () => {
   it("セル内改行を含むCSVをパースする", () => {
-    const csv = 'A,B\n"line1\nline2",C';
+    const csv = loadTestData("cell-newline.csv");
     const result = parseCsv(csv);
 
     expect(result).toEqual([
@@ -215,7 +222,7 @@ describe("parseCsv", () => {
   });
 
   it("複数の複数行セルを処理する", () => {
-    const csv = '"a\nb","c\nd"';
+    const csv = loadTestData("multi-multiline.csv");
     const result = parseCsv(csv);
 
     expect(result).toEqual([["a\nb", "c\nd"]]);
@@ -224,11 +231,13 @@ describe("parseCsv", () => {
 
 describe("detectDelimiter", () => {
   it("タブがあればTSVと判定する", () => {
-    expect(detectDelimiter("A\tB\tC\n1\t2\t3")).toBe("tsv");
+    const tsv = loadTestData("basic.tsv");
+    expect(detectDelimiter(tsv)).toBe("tsv");
   });
 
   it("カンマがあればCSVと判定する", () => {
-    expect(detectDelimiter("A,B,C\n1,2,3")).toBe("csv");
+    const csv = loadTestData("basic.csv");
+    expect(detectDelimiter(csv)).toBe("csv");
   });
 
   it("タブとカンマ両方あればTSV優先", () => {
@@ -236,11 +245,13 @@ describe("detectDelimiter", () => {
   });
 
   it("2つ以上の連続スペースがあればspacesと判定する", () => {
-    expect(detectDelimiter("名前    年齢    職業")).toBe("spaces");
+    const spaces = loadTestData("space-separated.txt");
+    expect(detectDelimiter(spaces)).toBe("spaces");
   });
 
   it("markdownテーブルを判定する", () => {
-    expect(detectDelimiter("|A|B|C|")).toBe("markdown");
+    const md = loadTestData("basic.md");
+    expect(detectDelimiter(md)).toBe("markdown");
     expect(detectDelimiter("| A | B | C |")).toBe("markdown");
   });
 
@@ -251,9 +262,7 @@ describe("detectDelimiter", () => {
 
 describe("parseMarkdownTable", () => {
   it("基本的なmarkdownテーブルをパースする", () => {
-    const md = `|A|B|C|
-|---|---|---|
-|1|2|3|`;
+    const md = loadTestData("basic.md");
     const result = parseMarkdownTable(md);
 
     expect(result).toEqual([
@@ -263,9 +272,7 @@ describe("parseMarkdownTable", () => {
   });
 
   it("スペースを含むmarkdownテーブルをパースする", () => {
-    const md = `| 品名 | 金額 |
-| --- | --- |
-| カフェ | 560 |`;
+    const md = loadTestData("with-spaces.md");
     const result = parseMarkdownTable(md);
 
     expect(result).toEqual([
@@ -275,9 +282,7 @@ describe("parseMarkdownTable", () => {
   });
 
   it("空セルを含むmarkdownテーブルをパースする", () => {
-    const md = `|品名|勘定科目|空白|取引先|
-|---|---|---|---|
-|カフェ|雑費||コメダ珈琲店|`;
+    const md = loadTestData("empty-cells.md");
     const result = parseMarkdownTable(md);
 
     expect(result).toEqual([
@@ -287,9 +292,7 @@ describe("parseMarkdownTable", () => {
   });
 
   it("インデントされたmarkdownテーブルをパースする", () => {
-    const md = `     |A|B|
-     |---|---|
-     |1|2|`;
+    const md = loadTestData("indented.md");
     const result = parseMarkdownTable(md);
 
     expect(result).toEqual([
@@ -301,9 +304,7 @@ describe("parseMarkdownTable", () => {
 
 describe("toHtmlTable with markdown", () => {
   it("markdownテーブルを自動検出してHTMLテーブルに変換する", () => {
-    const md = `|名前|年齢|
-|---|---|
-|田中|30|`;
+    const md = loadTestData("japanese.md");
     const result = toHtmlTable(md);
 
     expect(result).toBe(
@@ -317,7 +318,7 @@ describe("toHtmlTable with markdown", () => {
 
 describe("parseSpaceSeparated", () => {
   it("連続スペースで区切る", () => {
-    const data = "名前    年齢    職業\n田中    30      エンジニア";
+    const data = loadTestData("space-separated.txt");
     const result = parseSpaceSeparated(data);
 
     expect(result).toEqual([
@@ -327,7 +328,7 @@ describe("parseSpaceSeparated", () => {
   });
 
   it("スペース数が異なっても正しく分割する", () => {
-    const data = "A  B    C\n1   2  3";
+    const data = loadTestData("space-varying.txt");
     const result = parseSpaceSeparated(data);
 
     expect(result).toEqual([
@@ -337,7 +338,7 @@ describe("parseSpaceSeparated", () => {
   });
 
   it("単一スペースはセル内に残る", () => {
-    const data = "Hello World  Test";
+    const data = loadTestData("space-single.txt");
     const result = parseSpaceSeparated(data);
 
     expect(result).toEqual([["Hello World", "Test"]]);
@@ -346,13 +347,13 @@ describe("parseSpaceSeparated", () => {
 
 describe("toHtmlTable with spaces", () => {
   it("スペース区切りを自動検出してHTMLテーブルに変換する", () => {
-    const data = "名前    年齢\n田中    30";
+    const data = loadTestData("space-separated.txt");
     const result = toHtmlTable(data);
 
     expect(result).toBe(
       "<table>" +
-        "<tr><th>名前</th><th>年齢</th></tr>" +
-        "<tr><td>田中</td><td>30</td></tr>" +
+        "<tr><th>名前</th><th>年齢</th><th>職業</th></tr>" +
+        "<tr><td>田中</td><td>30</td><td>エンジニア</td></tr>" +
         "</table>"
     );
   });
@@ -360,25 +361,25 @@ describe("toHtmlTable with spaces", () => {
 
 describe("toHtmlTable with auto detection", () => {
   it("TSVを自動検出する", () => {
-    const tsv = "A\tB\n1\t2";
+    const tsv = loadTestData("basic.tsv");
     const result = toHtmlTable(tsv);
 
     expect(result).toBe(
       "<table>" +
-        "<tr><th>A</th><th>B</th></tr>" +
-        "<tr><td>1</td><td>2</td></tr>" +
+        "<tr><th>A</th><th>B</th><th>C</th></tr>" +
+        "<tr><td>1</td><td>2</td><td>3</td></tr>" +
         "</table>"
     );
   });
 
   it("CSVを自動検出する", () => {
-    const csv = "A,B\n1,2";
+    const csv = loadTestData("basic.csv");
     const result = toHtmlTable(csv);
 
     expect(result).toBe(
       "<table>" +
-        "<tr><th>A</th><th>B</th></tr>" +
-        "<tr><td>1</td><td>2</td></tr>" +
+        "<tr><th>A</th><th>B</th><th>C</th></tr>" +
+        "<tr><td>1</td><td>2</td><td>3</td></tr>" +
         "</table>"
     );
   });
