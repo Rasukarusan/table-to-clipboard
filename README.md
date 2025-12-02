@@ -1,3 +1,7 @@
+
+<img width="512" height="717" alt="Gemini_Generated_Image_3oi7cq3oi7cq3oi7" src="https://github.com/user-attachments/assets/1fa7d4d9-d6ba-41fc-83f9-5d0defc77e0d" />
+
+
 # table-to-clipboard
 
 テキストデータ（TSV, CSV, Markdown, スペース区切り）をスプレッドシートに貼り付け可能な形式に変換するCLIツール。
