@@ -98,15 +98,24 @@ export function parseCsv(data: string): string[][] {
   return rows;
 }
 
-export type Delimiter = "tsv" | "csv" | "spaces" | "markdown" | "auto";
+export type Delimiter = "tsv" | "csv" | "spaces" | "markdown" | "boxdraw" | "auto";
 
-export function detectDelimiter(data: string): "tsv" | "csv" | "spaces" | "markdown" {
+export function detectDelimiter(data: string): "tsv" | "csv" | "spaces" | "markdown" | "boxdraw" {
   const firstLine = data.split("\n")[0];
 
   // markdownテーブルの判定（|で始まるか、|を含む行）
   const trimmedFirst = firstLine.trim();
   if (trimmedFirst.startsWith("|") || /\|.*\|/.test(trimmedFirst)) {
     return "markdown";
+  }
+
+  // 罫線テーブルの判定（先頭行に┌またはデータ行に│を含む）
+  const lines = data.split("\n");
+  for (const line of lines.slice(0, 5)) {
+    const t = line.trim();
+    if (t.includes("┌") || t.includes("│")) {
+      return "boxdraw";
+    }
   }
 
   const tabCount = (firstLine.match(/\t/g) || []).length;
@@ -161,6 +170,37 @@ export function parseMarkdownTable(data: string): string[][] {
   return rows;
 }
 
+export function parseBoxDrawTable(data: string): string[][] {
+  const lines = data.trim().split("\n");
+  const rows: string[][] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // │（U+2502）を含まない行はデータ行ではないのでスキップ
+    if (!trimmed.includes("│")) {
+      continue;
+    }
+
+    // データ行は│（U+2502）で分割し、各セルをtrim
+    const cells = trimmed
+      .split("│")
+      .map((cell) => cell.trim())
+      .filter((_, index, arr) => {
+        // 先頭・末尾の空要素を除去（│で始まり│で終わるため）
+        if (index === 0 && arr[0] === "") return false;
+        if (index === arr.length - 1 && arr[arr.length - 1] === "") return false;
+        return true;
+      });
+
+    if (cells.length > 0) {
+      rows.push(cells);
+    }
+  }
+
+  return rows;
+}
+
 export function parseSpaceSeparated(data: string): string[][] {
   return data.trim().split("\n").map((line) => {
     // 2つ以上の連続スペースで分割し、各セルをtrim
@@ -185,6 +225,9 @@ export function toHtmlTable(
       break;
     case "markdown":
       rows = parseMarkdownTable(data);
+      break;
+    case "boxdraw":
+      rows = parseBoxDrawTable(data);
       break;
     default:
       rows = data.trim().split("\n").map((line) => line.split("\t"));
@@ -285,6 +328,7 @@ async function main() {
   if (args.includes("--tsv")) delimiter = "tsv";
   if (args.includes("--spaces")) delimiter = "spaces";
   if (args.includes("--markdown") || args.includes("--md")) delimiter = "markdown";
+  if (args.includes("--boxdraw")) delimiter = "boxdraw";
 
   // 標準入力からデータを読み取り
   const rawData = await readStdin();
@@ -299,6 +343,7 @@ async function main() {
     console.error("  --tsv        TSV形式として処理（自動判定を上書き）");
     console.error("  --spaces     スペース区切り形式として処理（自動判定を上書き）");
     console.error("  --markdown   Markdownテーブル形式として処理（自動判定を上書き）");
+    console.error("  --boxdraw    罫線テーブル形式として処理（自動判定を上書き）");
     console.error("  --no-header  1行目をヘッダーとして扱わない");
     process.exit(1);
   }

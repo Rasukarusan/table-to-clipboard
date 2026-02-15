@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { escapeHtml, tsvToHtmlTable, toHtmlTable, parseCsvLine, parseCsv, detectDelimiter, parseSpaceSeparated, parseMarkdownTable, unescapeLiterals } from "./table-to-clipboard";
+import { escapeHtml, tsvToHtmlTable, toHtmlTable, parseCsvLine, parseCsv, detectDelimiter, parseSpaceSeparated, parseMarkdownTable, parseBoxDrawTable, unescapeLiterals } from "./table-to-clipboard";
 
 // テストデータを読み込むヘルパー関数
 const loadTestData = (filename: string): string => {
@@ -375,6 +375,66 @@ describe("toHtmlTable with auto detection", () => {
   it("CSVを自動検出する", () => {
     const csv = loadTestData("basic.csv");
     const result = toHtmlTable(csv);
+
+    expect(result).toBe(
+      "<table>" +
+        "<tr><th>A</th><th>B</th><th>C</th></tr>" +
+        "<tr><td>1</td><td>2</td><td>3</td></tr>" +
+        "</table>"
+    );
+  });
+});
+
+describe("detectDelimiter with boxdraw", () => {
+  it("罫線テーブルをboxdrawと判定する", () => {
+    const data = loadTestData("boxdraw-basic.txt");
+    expect(detectDelimiter(data)).toBe("boxdraw");
+  });
+
+  it("日本語を含む罫線テーブルをboxdrawと判定する", () => {
+    const data = loadTestData("boxdraw-japanese.txt");
+    expect(detectDelimiter(data)).toBe("boxdraw");
+  });
+});
+
+describe("parseBoxDrawTable", () => {
+  it("基本的な罫線テーブルをパースする", () => {
+    const data = loadTestData("boxdraw-basic.txt");
+    const result = parseBoxDrawTable(data);
+
+    expect(result).toEqual([
+      ["A", "B", "C"],
+      ["1", "2", "3"],
+    ]);
+  });
+
+  it("日本語を含む罫線テーブルをパースする", () => {
+    const data = loadTestData("boxdraw-japanese.txt");
+    const result = parseBoxDrawTable(data);
+
+    expect(result).toEqual([
+      ["品名", "勘定科目", "空白"],
+      ["ChatGPT Plus", "通信費", ""],
+    ]);
+  });
+});
+
+describe("toHtmlTable with boxdraw", () => {
+  it("罫線テーブルを自動検出してHTMLテーブルに変換する", () => {
+    const data = loadTestData("boxdraw-japanese.txt");
+    const result = toHtmlTable(data);
+
+    expect(result).toBe(
+      "<table>" +
+        "<tr><th>品名</th><th>勘定科目</th><th>空白</th></tr>" +
+        "<tr><td>ChatGPT Plus</td><td>通信費</td><td></td></tr>" +
+        "</table>"
+    );
+  });
+
+  it("罫線テーブルを明示指定でHTMLテーブルに変換する", () => {
+    const data = loadTestData("boxdraw-basic.txt");
+    const result = toHtmlTable(data, true, "boxdraw");
 
     expect(result).toBe(
       "<table>" +

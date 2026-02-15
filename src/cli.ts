@@ -32,6 +32,7 @@ Options:
   --tsv        TSV format (overrides auto-detection)
   --spaces     Space-separated format (overrides auto-detection)
   --markdown   Markdown table format (overrides auto-detection)
+  --boxdraw    Box-drawing table format (overrides auto-detection)
   --no-header  Don't treat the first row as header
   --help, -h   Show this help message
   --version    Show version
@@ -57,6 +58,7 @@ Examples:
   if (args.includes("--tsv")) delimiter = "tsv";
   if (args.includes("--spaces")) delimiter = "spaces";
   if (args.includes("--markdown") || args.includes("--md")) delimiter = "markdown";
+  if (args.includes("--boxdraw")) delimiter = "boxdraw";
 
   const rawData = await readStdin();
   // \t, \n などのリテラル文字列を実際のエスケープシーケンスに変換
