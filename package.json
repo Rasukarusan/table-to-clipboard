@@ -1,6 +1,6 @@
 {
   "name": "@rasukarusan/table-to-clipboard",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Convert text data (TSV, CSV, Markdown, space-separated) to clipboard format for spreadsheets",
   "main": "dist/table-to-clipboard.js",
   "types": "dist/table-to-clipboard.d.ts",
